@@ -44,8 +44,7 @@ function mergeObjects(objects) {
     const arr = Object.entries(obj);
 
     arr.forEach((item) => {
-      const key = item[0];
-      const value = item[1];
+      const [key, value] = item;
 
       const resultKeys = Object.keys(result);
 
