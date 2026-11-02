@@ -398,11 +398,10 @@ class CssSelector {
       pseudoClasses: [],
       pseudoElement: null,
     };
-    // Переменная для проверки порядка добавления
+
     this.currentOrder = 0;
   }
 
-  // Вспомогательный метод для проверки порядка
   checkOrder(newOrder) {
     if (newOrder < this.currentOrder) {
       throw new Error(
@@ -513,7 +512,6 @@ const cssSelectorBuilder = {
   },
 
   combine(selector1, combinator, selector2) {
-    // Создаем новый "виртуальный" селектор, который просто склеивает строки
     const combined = new CssSelector();
     combined.stringify = () =>
       `${selector1.stringify()} ${combinator} ${selector2.stringify()}`;
