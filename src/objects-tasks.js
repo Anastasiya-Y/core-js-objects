@@ -415,101 +415,84 @@ function group(array, keySelector, valueSelector) {
  *
  *  For more examples see unit tests.
  */
+/**
+ * Класс, который хранит состояние строящегося селектора.
+ */
 class CssSelector {
   constructor() {
-    this.parts = {
-      element: null,
-      id: null,
-      classes: [],
-      attrs: [],
-      pseudoClasses: [],
-      pseudoElement: null,
-    };
-
-    this.currentOrder = 0;
+    this.parts = [];
+    this.order = 0;
   }
 
   checkOrder(newOrder) {
-    if (newOrder < this.currentOrder) {
+    if (newOrder < this.order) {
       throw new Error(
         'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
       );
     }
-    this.currentOrder = newOrder;
+    this.order = newOrder;
+  }
+
+  checkUnique(type) {
+    if (this.parts.some((part) => part.type === type)) {
+      // Внимание: тесты ожидают "than" (с буквой "a"), а не "then"
+      throw new Error(
+        'Element, id and pseudo-element should not occur more than one time inside the selector'
+      );
+    }
   }
 
   element(value) {
-    if (this.parts.element !== null) {
-      throw new Error(
-        'Element, id and pseudo-element should not occur more then one time inside the selector'
-      );
-    }
+    this.checkUnique('element');
     this.checkOrder(1);
-    this.parts.element = value;
+    this.parts.push({ type: 'element', value });
     return this;
   }
 
   id(value) {
-    if (this.parts.id !== null) {
-      throw new Error(
-        'Element, id and pseudo-element should not occur more then one time inside the selector'
-      );
-    }
+    this.checkUnique('id');
     this.checkOrder(2);
-    this.parts.id = value;
+    this.parts.push({ type: 'id', value });
     return this;
   }
 
   class(value) {
     this.checkOrder(3);
-    this.parts.classes.push(value);
+    this.parts.push({ type: 'class', value });
     return this;
   }
 
   attr(value) {
     this.checkOrder(4);
-    this.parts.attrs.push(value);
+    this.parts.push({ type: 'attr', value });
     return this;
   }
 
   pseudoClass(value) {
     this.checkOrder(5);
-    this.parts.pseudoClasses.push(value);
+    this.parts.push({ type: 'pseudoClass', value });
     return this;
   }
 
   pseudoElement(value) {
-    if (this.parts.pseudoElement !== null) {
-      throw new Error(
-        'Element, id and pseudo-element should not occur more then one time inside the selector'
-      );
-    }
+    this.checkUnique('pseudoElement');
     this.checkOrder(6);
-    this.parts.pseudoElement = value;
+    this.parts.push({ type: 'pseudoElement', value });
     return this;
   }
 
   stringify() {
-    let result = '';
-
-    if (this.parts.element) result += this.parts.element;
-    if (this.parts.id) result += `#${this.parts.id}`;
-
-    this.parts.classes.forEach((cls) => {
-      result += `.${cls}`;
-    });
-
-    this.parts.attrs.forEach((attr) => {
-      result += `[${attr}]`;
-    });
-
-    this.parts.pseudoClasses.forEach((pc) => {
-      result += `:${pc}`;
-    });
-
-    if (this.parts.pseudoElement) result += `::${this.parts.pseudoElement}`;
-
-    return result;
+    return this.parts
+      .map((part) => {
+        if (part.type === 'element') return part.value;
+        if (part.type === 'id') return `#${part.value}`;
+        if (part.type === 'class') return `.${part.value}`;
+        if (part.type === 'attr') return `[${part.value}]`;
+        if (part.type === 'pseudoClass') return `:${part.value}`;
+        if (part.type === 'pseudoElement') return `::${part.value}`;
+        return '';
+      })
+      .join('');
   }
 }
 
