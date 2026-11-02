@@ -388,34 +388,136 @@ function group(array, keySelector, valueSelector) {
  *
  *  For more examples see unit tests.
  */
+class CssSelector {
+  constructor() {
+    this.parts = {
+      element: null,
+      id: null,
+      classes: [],
+      attrs: [],
+      pseudoClasses: [],
+      pseudoElement: null,
+    };
+    // Переменная для проверки порядка добавления
+    this.currentOrder = 0;
+  }
+
+  // Вспомогательный метод для проверки порядка
+  checkOrder(newOrder) {
+    if (newOrder < this.currentOrder) {
+      throw new Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
+    }
+    this.currentOrder = newOrder;
+  }
+
+  element(value) {
+    if (this.parts.element !== null) {
+      throw new Error(
+        'Element, id and pseudo-element should not occur more then one time inside the selector'
+      );
+    }
+    this.checkOrder(1);
+    this.parts.element = value;
+    return this;
+  }
+
+  id(value) {
+    if (this.parts.id !== null) {
+      throw new Error(
+        'Element, id and pseudo-element should not occur more then one time inside the selector'
+      );
+    }
+    this.checkOrder(2);
+    this.parts.id = value;
+    return this;
+  }
+
+  class(value) {
+    this.checkOrder(3);
+    this.parts.classes.push(value);
+    return this;
+  }
+
+  attr(value) {
+    this.checkOrder(4);
+    this.parts.attrs.push(value);
+    return this;
+  }
+
+  pseudoClass(value) {
+    this.checkOrder(5);
+    this.parts.pseudoClasses.push(value);
+    return this;
+  }
+
+  pseudoElement(value) {
+    if (this.parts.pseudoElement !== null) {
+      throw new Error(
+        'Element, id and pseudo-element should not occur more then one time inside the selector'
+      );
+    }
+    this.checkOrder(6);
+    this.parts.pseudoElement = value;
+    return this;
+  }
+
+  stringify() {
+    let result = '';
+
+    if (this.parts.element) result += this.parts.element;
+    if (this.parts.id) result += `#${this.parts.id}`;
+
+    this.parts.classes.forEach((cls) => {
+      result += `.${cls}`;
+    });
+
+    this.parts.attrs.forEach((attr) => {
+      result += `[${attr}]`;
+    });
+
+    this.parts.pseudoClasses.forEach((pc) => {
+      result += `:${pc}`;
+    });
+
+    if (this.parts.pseudoElement) result += `::${this.parts.pseudoElement}`;
+
+    return result;
+  }
+}
 
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  element(value) {
+    return new CssSelector().element(value);
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    return new CssSelector().id(value);
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    return new CssSelector().class(value);
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    return new CssSelector().attr(value);
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  pseudoClass(value) {
+    return new CssSelector().pseudoClass(value);
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  pseudoElement(value) {
+    return new CssSelector().pseudoElement(value);
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  combine(selector1, combinator, selector2) {
+    // Создаем новый "виртуальный" селектор, который просто склеивает строки
+    const combined = new CssSelector();
+    combined.stringify = () =>
+      `${selector1.stringify()} ${combinator} ${selector2.stringify()}`;
+    return combined;
   },
 };
 
